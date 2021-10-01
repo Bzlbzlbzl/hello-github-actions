@@ -10,3 +10,30 @@ jobs:
       - uses: ./action-a
         with:
           MY_NAME: "Brian"
+      - name: Humm
+        run: |
+          sleep 30s
+          echo 'true' > RUN_NEXT_JOB.TXT
+      - name: Upload file 'RUN_NEXT_JOB.TXT' as an artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: pass_file
+          path: RUN_NEXT_JOB.TXT
+  build_2:
+    name: Dependency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./action-a
+      - name: Download file 'RUN_NEXT_JOB.TXT' from artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: pass_file
+
+      - name: Read file 'RUN_NEXT_JOB.TXT' and set output parameter
+        id: set_output
+        run: echo "::set-output name=RUN_NEXT_JOB::$(<pass_file/RUN_NEXT_JOB.TXT)"
+
+      - name: Run steps of Job Three
+        if: steps.set_output.outputs.RUN_NEXT_JOB == 'true'
+        run: echo "Some steps of Job Three"
